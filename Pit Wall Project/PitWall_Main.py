@@ -1,4 +1,10 @@
 #Day 2
+
+#Update Github:
+#git add .
+#git commit -m "Update project files"
+#git push origin main
+
 import requests
 import pandas as pd
 import matplotlib.pyplot as plt
