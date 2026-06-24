@@ -21,11 +21,12 @@
 import requests
 import pandas as pd
 import matplotlib.pyplot as plt
-from urllib.request import urlopen[]
+from urllib.request import urlopen
 import json
 import urllib.parse
 import urllib.request
 from pick import pick
+
 
 
 
@@ -78,9 +79,48 @@ selection_session = ["Qualifying", "Race", "Practice 1", "Practice 2", "Practice
 user_session, index = pick(selection_session, "Select the Gran Prix: ")
 print(f"Gran Prix: {user_session} (index: {index})")
 
-print (f"Session Selected:{user_country}, {user_session}, {user_year}")
+
+user_driver = input("Enter the driver number: ")
+ 
+
+print (f"Session Selected:{user_country}, {user_session}, {user_year}, {user_driver}")
 print (f"Grabbing Key...")
 
 #Generate session key
 key = get_session_key(user_year, user_country, user_session)
 print (f"Target Session Key: {key}")
+
+response = urlopen(f'https://api.openf1.org/v1/championship_drivers?session_key={key}&driver_number={user_driver}')
+data = json.loads(response.read().decode('utf-8'))
+
+
+response_driver = urlopen(f'https://api.openf1.org/v1/drivers?driver_number={user_driver}&session_key={key}')
+data_driver = json.loads(response_driver.read().decode('utf-8'))
+
+
+driver_name = data_driver[0]['first_name']
+driver_surname = data_driver[0]['last_name']
+driver_acronym = data_driver[0]['name_acronym']
+driver_standing = data[0]['position_current']
+driver_team = data_driver[0]['team_name']
+
+team_url = urllib.parse.quote(driver_team)
+
+print(f"Driver Name: {driver_name} {driver_surname}")
+print(f"Driver Acronym: {driver_acronym}")
+print(f"Driver Number: {user_driver}")
+print(f"Current Standings: {driver_standing}")
+print(f"Current Team: {driver_team}")
+
+response = urlopen(f'https://api.openf1.org/v1/championship_teams?session_key={key}&team_name={team_url}')
+data_team = json.loads(response.read().decode('utf-8'))
+
+team_standing = data_team[0]['position_current']
+print(f"Current Team Standings: {team_standing}")
+
+
+
+response = urlopen(f'https://api.openf1.org/v1/car_data?driver_number={user_driver}&session_key={key}')
+current_data = json.loads(response.read().decode('utf-8'))
+date = data_driver[0]['date']
+print(f"{date}")
