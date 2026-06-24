@@ -5,6 +5,14 @@
 #git commit -m "Update project files"
 #git push origin main
 
+
+#Download from Github
+#cd OpenWall
+#git pull origin main
+
+#Linux Run: python "Pit Wall Project/PitWall_Main.py"
+
+
 import requests
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -51,39 +59,22 @@ def get_session_key(year, circuit_short_name, session_name):
 
 
 #User Input
-allowed_countries = ["Sakhir", "Jeddah", "Melbourne", "Baku", "Miami", "Imola", "Monte Carlo", "Catalunya", "Montreal", "Spielberg", "Silverstone", "Hungaroring", "Spa-Francorchamps", "Zandvoort", "Monza", "Singapore", "Suzuka", "Lusail", "Austin", "Mexico City", "Interlagos", "Las Vegas", "Yas Marina Circuit"]
-while True: 
-    user_country = input("Enter the country of the Grand Prix, type 'help' for a list of valid countries: ")
-    if user_country in allowed_countries:
-        break
-    #elif user_country == "New Zealand":
-        #print("I wish")
-    elif user_country.lower() == "help":
-        print("Valid countries are:")
-        for country in allowed_countries:
-            print(f"- {country}")
-    else:
-        print("Invalid country. Please enter a valid country from the list.")
+user_country = ["Sakhir", "Jeddah", "Melbourne", "Baku", "Miami", "Imola", "Monte Carlo", "Catalunya", "Montreal", "Spielberg", "Silverstone", "Hungaroring", "Spa-Francorchamps", "Zandvoort", "Monza", "Singapore", "Suzuka", "Lusail", "Austin", "Mexico City", "Interlagos", "Las Vegas", "Yas Marina Circuit"]
+selection, index = pick(user_country, "Select the Gran Prix: ")
+print(f"Gran Prix: {selection} (index: {index})")
 
 
-allowed_years = ["2020", "2021", "2022", "2023"]
-while True: 
-    user_year = input("Enter the year of the Grand Prix: ")
-    if str(user_year) in allowed_years:
-        break
-    else:       
-        print("Invalid year. Please enter a valid year from the list.")
-
-        
-allowed_sessions = ["Qualifying", "Race", "Practice 1", "Practice 2", "Practice 3", "Sprint Qualifying", "Sprint Race"]
-while True: 
-    user_session = input("Enter the session of the Grand Prix: ")
-    if user_session in allowed_sessions:
-        break
-    else:
-        print("Invalid session. Please enter a valid session from the list.")
+user_year = ["2020", "2021", "2022", "2023", "2024"]
+selection, index = pick(user_year, "Select the Gran Prix: ")
+print(f"Gran Prix: {selection} (index: {index})")
 
 
+user_session = ["Qualifying", "Race", "Practice 1", "Practice 2", "Practice 3", "Sprint Qualifying", "Sprint Race"]
+selection, index = pick(user_session, "Select the Gran Prix: ")
+print(f"Gran Prix: {selection} (index: {index})")
+
+print (f"Session Selected:{user_country}, {user_session}, {user_year}")
+print (f"Grabbing Key...")
 
 #Generate session key
 key = get_session_key(user_year, user_country, user_session)
