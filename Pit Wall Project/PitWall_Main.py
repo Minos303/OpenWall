@@ -12,11 +12,16 @@
 
 #Linux Run: python "Pit Wall Project/PitWall_Main.py"
 
+#Create Virtual Environment: 
+# python -m venv venv
+# source venv/bin/activate.fish
+
+
 
 import requests
 import pandas as pd
 import matplotlib.pyplot as plt
-from urllib.request import urlopen
+from urllib.request import urlopen[]
 import json
 import urllib.parse
 import urllib.request
@@ -59,19 +64,19 @@ def get_session_key(year, circuit_short_name, session_name):
 
 
 #User Input
-user_country = ["Sakhir", "Jeddah", "Melbourne", "Baku", "Miami", "Imola", "Monte Carlo", "Catalunya", "Montreal", "Spielberg", "Silverstone", "Hungaroring", "Spa-Francorchamps", "Zandvoort", "Monza", "Singapore", "Suzuka", "Lusail", "Austin", "Mexico City", "Interlagos", "Las Vegas", "Yas Marina Circuit"]
-selection, index = pick(user_country, "Select the Gran Prix: ")
-print(f"Gran Prix: {selection} (index: {index})")
+selection_country = ["Sakhir", "Jeddah", "Melbourne", "Baku", "Miami", "Imola", "Monte Carlo", "Catalunya", "Montreal", "Spielberg", "Silverstone", "Hungaroring", "Spa-Francorchamps", "Zandvoort", "Monza", "Singapore", "Suzuka", "Lusail", "Austin", "Mexico City", "Interlagos", "Las Vegas", "Yas Marina Circuit"]
+user_country, index = pick(selection_country, "Select the Gran Prix: ")
+print(f"Gran Prix: {user_country} (index: {index})")
 
 
-user_year = ["2020", "2021", "2022", "2023", "2024"]
-selection, index = pick(user_year, "Select the Gran Prix: ")
-print(f"Gran Prix: {selection} (index: {index})")
+selection_year = ["2020", "2021", "2022", "2023", "2024"]
+user_year, index = pick(selection_year, "Select the Gran Prix: ")
+print(f"Gran Prix: {user_year} (index: {index})")
 
 
-user_session = ["Qualifying", "Race", "Practice 1", "Practice 2", "Practice 3", "Sprint Qualifying", "Sprint Race"]
-selection, index = pick(user_session, "Select the Gran Prix: ")
-print(f"Gran Prix: {selection} (index: {index})")
+selection_session = ["Qualifying", "Race", "Practice 1", "Practice 2", "Practice 3", "Sprint Qualifying", "Sprint Race"]
+user_session, index = pick(selection_session, "Select the Gran Prix: ")
+print(f"Gran Prix: {user_session} (index: {index})")
 
 print (f"Session Selected:{user_country}, {user_session}, {user_year}")
 print (f"Grabbing Key...")
