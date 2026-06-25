@@ -36,7 +36,9 @@ import os
 from flask import Flask, render_template
 import pandas as pd
 from datetime import datetime, timedelta
-
+import time
+import streamlit as st
+import random
 
 
 user_country = ""
@@ -48,6 +50,10 @@ user_team = ""
 country_selection = ""
 year_selection = ""
 session_selection = ""
+telementary_chart = st.empty()
+speed_history_list = []
+
+
 
 app = Flask(__name__)
 
@@ -80,25 +86,30 @@ def get_session_key(year, circuit_short_name, session_name):
 
 
 
-    #User Input
-selection_country = ["Sakhir", "Jeddah", "Melbourne", "Baku", "Miami", "Imola", "Monte Carlo", "Catalunya", "Montreal", "Spielberg", "Silverstone", "Hungaroring", "Spa-Francorchamps", "Zandvoort", "Monza", "Singapore", "Suzuka", "Lusail", "Austin", "Mexico City", "Interlagos", "Las Vegas", "Yas Marina Circuit"]
-user_country, index = pick(selection_country, "Select the Gran Prix: ")
-print(f"Gran Prix: {user_country} (index: {index})")
+#     #User Input
+# selection_country = ["Sakhir", "Jeddah", "Melbourne", "Baku", "Miami", "Imola", "Monte Carlo", "Catalunya", "Montreal", "Spielberg", "Silverstone", "Hungaroring", "Spa-Francorchamps", "Zandvoort", "Monza", "Singapore", "Suzuka", "Lusail", "Austin", "Mexico City", "Interlagos", "Las Vegas", "Yas Marina Circuit"]
+# user_country, index = pick(selection_country, "Select the Gran Prix: ")
+# print(f"Gran Prix: {user_country} (index: {index})")
 
 
-selection_year = ["2020", "2021", "2022", "2023", "2024"]
-user_year, index = pick(selection_year, "Select the Gran Prix: ")
-print(f"Gran Prix: {user_year} (index: {index})")
+# selection_year = ["2020", "2021", "2022", "2023", "2024"]
+# user_year, index = pick(selection_year, "Select the Gran Prix: ")
+# print(f"Gran Prix: {user_year} (index: {index})")
 
 
-selection_session = ["Qualifying", "Race", "Practice 1", "Practice 2", "Practice 3", "Sprint Qualifying", "Sprint Race"]
-user_session, index = pick(selection_session, "Select the Gran Prix: ")
-print(f"Gran Prix: {user_session} (index: {index})")
+# selection_session = ["Qualifying", "Race", "Practice 1", "Practice 2", "Practice 3", "Sprint Qualifying", "Sprint Race"]
+# user_session, index = pick(selection_session, "Select the Gran Prix: ")
+# print(f"Gran Prix: {user_session} (index: {index})")
 
 
-user_driver = input("Enter the driver number: ")
-print (f"Session Selected:{user_country}, {user_session}, {user_year}, {user_driver}")
-print (f"Grabbing Key...")
+# user_driver = input("Enter the driver number: ")
+# print (f"Session Selected:{user_country}, {user_session}, {user_year}, {user_driver}")
+# print (f"Grabbing Key...")
+
+user_country = "Jeddah"
+user_year = "2023"
+user_session = "Race"
+user_driver = "1"
 
     #Generate session key
 key = get_session_key(user_year, user_country, user_session)
@@ -143,44 +154,76 @@ response = urlopen(f'https://api.openf1.org/v1/car_data?driver_number={user_driv
 current_data = json.loads(response.read().decode('utf-8'))
 
 
+
 date = current_data[0]['date']
 print (f"{date}")
 dt_date = datetime.fromisoformat(date)
 
-for i in range(30):
-    print(type(date))
-    print(date)
-    positive_time = dt_date + timedelta(seconds=0.05)
-    negative_time = dt_date - timedelta(seconds=0.05)
-
-
-
-    params = {
+bulk_params = {
     "driver_number": user_driver,
     "session_key": key,
-    "date>": negative_time.isoformat(),
-    "date<": positive_time.isoformat()
-    }
+    "date>": dt_date.isoformat(),
+    "date<": (dt_date + timedelta(minutes=50)).isoformat()
+}
 
-    query_string = urllib.parse.urlencode(params)
-
-    try: 
-        base_url = "https://api.openf1.org/v1/car_data"
-        full_url = f"{base_url}?{query_string}"
-
-    response = urlopen(full_url)
-
-    #response = urlopen(f'https://api.openf1.org/v1/car_data?driver_number={user_driver}&session_key={key}&date={date}>= {negative_time.isoformat()}&date<={positive_time.isoformat()}')
-    current_data = json.loads(response.read().decode('utf-8'))
-    current_speed = current_data[0]['speed']
-    print(f"Current Speed: {current_speed}")
-    dt_date = dt_date + timedelta(seconds=0.1)
+print("Downloading Data...")
 
 
 
-#if __name__ == '__main__':
-    #get_session_key(user_year, user_country, user_session)
-    #app.run()
+query_string = urllib.parse.urlencode(bulk_params)
+
+base_url = "https://api.openf1.org/v1/car_data"
+full_url = f"{base_url}?{query_string}"
+response = urlopen(full_url)
+data_point = json.loads(response.read().decode('utf-8'))
+
+
+print("Data Downloaded. Processing...")
+
+log_time=""
+
+#get_session_key(user_year, user_country, user_session)
+#app.run()
+
+launch_index = 0
+
+for index, frame in enumerate(data_point):
+    if frame["speed"] > 0:
+        launch_index = index
+        break
+
+starting_index = max(0, launch_index - 20)
+
+time_legnth = 10000
+
+st.title("Pit Wall Live Dashboard")
+st.write("Driver: {driver_name}")
+
+
+
+for i in range(starting_index, time_legnth):
+    seperate_value = data_point[i]
+    current_speed = seperate_value['speed']
+    speed_history_list.append(current_speed)
+
+    if len(speed_history_list) > 0:
+        speed_history_list.pop(0)
+
+    telementary_chart.line_chart(speed_history_list)
+
+    time.sleep(0.5) 
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
