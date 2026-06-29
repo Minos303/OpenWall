@@ -1,4 +1,4 @@
-#Day 2
+
 
 #Update Github:
 #git add .
@@ -39,6 +39,22 @@ from datetime import datetime, timedelta
 import time
 import streamlit as st
 import random
+import threading
+import dearpygui.dearpygui as dpg
+
+
+seconds_elapsed = []
+car_speed = []
+car_throttle = []
+car_brake = []
+car_rpm = []
+car_gear = []
+data_index = []
+
+max_history_points = 100  # Keep the last 20 seconds of data on screen (100 points / 5Hz)
+time_counter = 0.0
+data_index = 0
+
 
 
 user_country = ""
@@ -81,6 +97,78 @@ def get_session_key(year, circuit_short_name, session_name):
         print("Invalid Driver") #For future notice error 86 means that the session parameters did not return any results after sending the meeting key. This is likely due to a mismatch between the user input and the API database. Please ensure that the session name is correct and matches the API's expected format.
         return None
     return  session_response.json()[0]["session_key"]
+
+def stream_data():
+    global time_counter, data_index
+    while data_index < len(data_point):
+        next_speed_value = data_point[data_index]['speed']
+        next_throttle_value = data_point[data_index]['throttle']
+        next_brake_value = data_point[data_index]['brake']
+        next_gear_value = data_point[data_index]['n_gear']
+        next_rpm_value = data_point[data_index]['rpm']
+
+        time_counter += 0.2
+        seconds_elapsed.append(time_counter)
+        car_speed.append(next_speed_value)
+        car_throttle.append(next_throttle_value)
+        car_brake.append(next_brake_value)
+        car_gear.append(next_gear_value)
+        car_rpm.append(next_rpm_value)
+        
+
+        if len(seconds_elapsed) > max_history_points:
+            seconds_elapsed.pop(0)
+            car_speed.pop(0)
+            car_gear.pop(0)
+            car_brake.pop(0)
+            car_rpm.pop(0)
+            car_throttle.pop(0)
+            
+
+        dpg.set_value("Speed_series_tag", [seconds_elapsed, car_speed])
+        dpg.set_value("Throttle_series_tag", [seconds_elapsed, car_throttle])
+        # dpg.set_value("Brake_series_tag", [seconds_elapsed, car_brake])
+        # dpg.set_value("rpm_series_tag", [seconds_elapsed, car_rpm])
+        # dpg.set_value("Gear_series_tag", [seconds_elapsed, car_gear])
+
+        dpg.fit_axis_data("x_axis")
+        dpg.fit_axis_data("y_axis")
+        data_index += 1
+        time.sleep(0.2)
+
+dpg.create_context()
+with dpg.window(label="Stream playback", width=800, height=500):
+    
+
+    with dpg.plot(label="Speed Playback", height=400, width=-1):
+        dpg.add_plot_legend()
+        
+        dpg.add_plot_axis(dpg.mvXAxis, label="Timeline (Seconds)", tag="x_axis")
+        dpg.add_plot_axis(dpg.mvYAxis, label="Value", tag="y_axis")
+        dpg.set_axis_limits("y_axis", -10, 350)
+        dpg.add_line_series(
+            seconds_elapsed, 
+            car_speed, 
+            label="Dataset Track 1", 
+            parent="y_axis", 
+            tag="Speed_series_tag"
+        )
+    with dpg.plot(label="Throttle Playback", height=400, width=-1):
+        dpg.add_plot_legend()
+        
+        dpg.add_plot_axis(dpg.mvXAxis, label="Timeline (Seconds)", tag="throttle_x_axis")
+        dpg.add_plot_axis(dpg.mvYAxis, label="Value", tag="throttle_y_axis")
+        dpg.set_axis_limits("throttle_y_axis", -5, 100)
+        dpg.add_line_series(
+            seconds_elapsed, 
+            car_throttle, 
+            label="Dataset Track 1", 
+            parent="throttle_y_axis", 
+            tag="Throttle_series_tag"
+        )
+
+
+        
 
 
 
@@ -214,7 +302,7 @@ for index, frame in enumerate(data_point):
         launch_index = index
         break
 
-starting_index = max(0, launch_index - 20)
+starting_index = max(0, launch_index - 50)
 
 time_legnth = 10000
 #print(data_point)
@@ -225,6 +313,18 @@ time_legnth = 10000
 print("Race data about to start, Press CTR C to exit")
 time.sleep(5) 
 
+
+dpg.create_viewport(title='Data Matrix Visualiser', width=820, height=540)
+dpg.setup_dearpygui()
+dpg.show_viewport()
+
+data_index = starting_index
+data_index = starting_index
+playback_thread = threading.Thread(target=stream_data, daemon=True)
+playback_thread.start()
+
+dpg.start_dearpygui()
+dpg.destroy_context()
 
 for i in range(starting_index, time_legnth):
     seperate_value = data_point[i]
@@ -250,4 +350,5 @@ for i in range(starting_index, time_legnth):
 
     #telementary_chart.line_chart(speed_history_list)
 
-    time.sleep(0.1) 
+time.sleep(0.1) 
+
