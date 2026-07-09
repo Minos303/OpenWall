@@ -1,12 +1,10 @@
-#git add.
-#git commit -m "Updated project UI and telemetry parser"
+#git add .
+#git commit -m "Hotfix: Resolved DearPyGui Texture Not Found exception on launch"
 #git push origin main
 
 #cd OpenWall
 #git pull origin main
 #Linux Run: python "Pit Wall Project/PitWall_Main.py"
-
-
 import io
 import time
 import threading
@@ -14,10 +12,6 @@ import requests
 from datetime import datetime, timedelta
 import dearpygui.dearpygui as dpg
 from PIL import Image
-
-
-
-
 
 class F1TelemetryApp:
     TEAM_COLORS = {
@@ -36,9 +30,6 @@ class F1TelemetryApp:
 
     SPEEDS = [0.05, 0.1, 0.15, 0.2, 0.4, 0.8, 2.0, 20.0, 200.0, 2000.0]
 
-
-
-
     def __init__(self):
         self.http = requests.Session()
         self.base_url = "https://api.openf1.org/v1"
@@ -48,10 +39,29 @@ class F1TelemetryApp:
         self.selected_country = ""
         self.driver_num = ""
         
+
+
+
+
+
+
+
+
+
+
+
         self.driver_name = ""
         self.driver_surname = ""
         self.driver_code = ""
         
+
+
+
+
+
+
+
+
         self.driver_rank = 0
         self.team_name = ""
         self.team_rank = 0
@@ -60,6 +70,10 @@ class F1TelemetryApp:
         self.w, self.h = 100, 100
         self.pixels = []
         
+
+
+
+
         self.old_scale_factor = 1.0 
         
         self.t_data = []
@@ -92,7 +106,6 @@ class F1TelemetryApp:
 
 
 
-
     def run(self):
         dpg.create_context()
         dpg.create_viewport(title='Open Wall Configurations', width=1200, height=900)
@@ -107,49 +120,39 @@ class F1TelemetryApp:
         dpg.destroy_context()
 
 
-
-
     def build_ui(self):
-        with dpg.texture_registry(tag="tex_reg", show=False):
-            dpg.add_dynamic_texture(1, 1, [1.0, 1.0, 1.0, 1.0], tag="driver_headshot_texture")
+        # Create a temporary blank texture registry so the UI doesn't crash on startup
+        with dpg.texture_registry():
+            blank_pixels = [0.0, 0.0, 0.0, 0.0] * (self.w * self.h)
+            dpg.add_dynamic_texture(self.w, self.h, blank_pixels, tag="driver_headshot_texture")
 
         with dpg.window(tag="main_window"):
             
             with dpg.group(tag="setup_layer"):
-                with dpg.table(header_row=False, policy=dpg.mvTable_SizingStretchProp):
-                    dpg.add_table_column() 
-                    dpg.add_table_column(init_width_or_weight=450.0) 
-                    dpg.add_table_column() 
+                dpg.add_text("Select Grand Prix Settings:")
+                dpg.add_spacer(height=10)
+                dpg.add_combo(label="Year", items=["2023", "2024", "2025", "2026"], tag="year_combo", callback=self.on_year_change, width=400)
+                dpg.add_spacer(height=10)
+                dpg.add_combo(label="Country", items=[], tag="country_combo", callback=self.on_country_change, width=400)
+                dpg.add_spacer(height=10)
+                dpg.add_combo(label="Driver", items=[], tag="driver_combo", width=400)
+                dpg.add_spacer(height=30)
+                
+                with dpg.group(horizontal=True):
+                    dpg.add_button(label="Load Telemetry Data", tag="load_btn", callback=self.on_load_click, width=350, height=60)
+                    dpg.add_spacer(width=20)
                     
-                    with dpg.table_row():
-                        dpg.add_text("") 
-                        
-                        with dpg.group():
-                            dpg.add_spacer(height=60)
-                            dpg.add_text("Select Grand Prix Settings:", color=[0, 210, 255, 255])
-                            dpg.add_spacer(height=15)
-                            dpg.add_combo(label="Year", items=["2023", "2024", "2025", "2026"], tag="year_combo", callback=self.on_year_change, width=320)
-                            dpg.add_spacer(height=10)
-                            dpg.add_combo(label="Country", items=[], tag="country_combo", callback=self.on_country_change, width=320)
-                            dpg.add_spacer(height=10)
-                            dpg.add_combo(label="Driver", items=[], tag="driver_combo", width=320)
-                            dpg.add_spacer(height=25)
-                            
-                            dpg.add_button(label="Load Telemetry Data", tag="load_btn", callback=self.on_load_click, width=320, height=50)
-                            dpg.add_spacer(height=30)
-                            
-                            with dpg.group(horizontal=False):
-                                dpg.add_loading_indicator(tag="spinner_indicator", radius=5.0, speed=2.5, show=False, color=[0, 210, 255, 255])
-                                dpg.add_spacer(height=10)
-                                dpg.add_text("", tag="loading_status_text", color=[200, 200, 200, 255])
-                        
-                        dpg.add_text("") 
+                    with dpg.group():
+                        dpg.add_spacer(height=20)
+                        with dpg.group(horizontal=True):
+                            dpg.add_loading_indicator(tag="spinner_indicator", radius=4.0, speed=2.0, show=False, color=[255, 30, 0, 255])
+                            dpg.add_spacer(width=10)
+                            dpg.add_text("", tag="loading_status_text")
 
             with dpg.group(tag="telemetry_layer", show=False):
                 with dpg.child_window(height=220, border=True):
                     with dpg.group(horizontal=True):
-                        with dpg.group(tag="headshot_container"):
-                            dpg.add_image("driver_headshot_texture", width=180, height=180, tag="ui_headshot_img")
+                        dpg.add_image("driver_headshot_texture", width=180, height=180)
                         dpg.add_spacer(width=15)
 
                         with dpg.group():
@@ -217,19 +220,13 @@ class F1TelemetryApp:
 
         dpg.set_primary_window("main_window", True)
 
-
-
-
     def create_line_plot(self, title, y_label, tag, y_limits, series_label):
         with dpg.plot(label=title, height=280, width=-1):
             dpg.add_plot_legend()
-            dpg.add_plot_axis(dpg.mvXAxis, label="Timeline (Seconds)", tag=tag + "_xaxis")
+            dpg.add_plot_axis(dpg.mvXAxis, label="Timeline (Seconds)")
             y_axis = dpg.add_plot_axis(dpg.mvYAxis, label=y_label)
             dpg.set_axis_limits(y_axis, y_limits[0], y_limits[1])
             dpg.add_line_series([], [], label=series_label, parent=y_axis, tag=tag)
-
-
-
 
     def on_year_change(self, sender, app_data):
         response = self.http.get(f"{self.base_url}/meetings", params={"year": app_data}).json()
@@ -242,9 +239,6 @@ class F1TelemetryApp:
         dpg.configure_item("country_combo", items=countries)
         dpg.set_value("country_combo", "")
         dpg.configure_item("driver_combo", items=[])
-
-
-
 
     def on_country_change(self, sender, app_data):
         year = dpg.get_value("year_combo")
@@ -265,9 +259,6 @@ class F1TelemetryApp:
                 dpg.configure_item("driver_combo", items=list(self.driver_registry.keys()))
         dpg.set_value("driver_combo", "")
 
-
-
-
     def on_load_click(self):
         self.selected_year = dpg.get_value("year_combo")
         self.selected_country = dpg.get_value("country_combo")
@@ -278,8 +269,6 @@ class F1TelemetryApp:
             dpg.configure_item("spinner_indicator", show=True)
             dpg.set_value("loading_status_text", "Preparing to load...")
             threading.Thread(target=self.download_telemetry_worker, daemon=True).start()
-
-
 
 
     def download_telemetry_worker(self):
@@ -303,10 +292,14 @@ class F1TelemetryApp:
             img = Image.open(io.BytesIO(img_data)).convert("RGBA")
             self.w, self.h = img.size
             
-            if hasattr(img, 'get_flattened_data'):
-                self.pixels = [x / 255.0 for p in img.get_flattened_data() for x in p]
-            else:
-                self.pixels = [x / 255.0 for p in list(img.getdata()) for x in p]
+
+
+
+
+
+
+
+            self.pixels = [x / 255.0 for p in list(img.getdata()) for x in p]
 
             dpg.set_value("loading_status_text", "Loading constructor standing...")
             team_res = self.http.get(f"{self.base_url}/championship_teams", params={"session_key": self.session_key, "team_name": self.team_name}).json()
@@ -336,11 +329,7 @@ class F1TelemetryApp:
 
             dpg.set_value("loading_status_text", "Loading track layouts...")
             raw_locations = self.http.get(f"{self.base_url}/location", params=query_params).json()
-            self.locations = []
-            for f in raw_locations:
-                if f.get('x') is not None and f.get('y') is not None and f['x'] != 0:
-                    f['parsed_date'] = datetime.strptime(f['date'][:19], "%Y-%m-%dT%H:%M:%S")
-                    self.locations.append(f)
+            self.locations = [f for f in raw_locations if f.get('x') is not None and f.get('y') is not None and f['x'] != 0]
 
             for lap in valid_laps:
                 if lap.get('lap_duration'):
@@ -368,11 +357,7 @@ class F1TelemetryApp:
                 }
                 try:
                     grid_loc_data = self.http.get(f"{self.base_url}/location", params=grid_query, timeout=3).json()
-                    filtered_locs = []
-                    for f in grid_loc_data:
-                        if f.get('x') is not None and f.get('y') is not None and f['x'] != 0:
-                            f['parsed_date'] = datetime.strptime(f['date'][:19], "%Y-%m-%dT%H:%M:%S")
-                            filtered_locs.append(f)
+                    filtered_locs = [f for f in grid_loc_data if f.get('x') is not None and f.get('y') is not None and f['x'] != 0]
                     if filtered_locs:
                         self.grid_locs[d_num] = filtered_locs
                 except Exception:
@@ -410,33 +395,9 @@ class F1TelemetryApp:
             self.apply_ui_assets()
 
 
-
-
     def apply_ui_assets(self):
-        if dpg.does_item_exist("ui_headshot_img"):
-            dpg.delete_item("ui_headshot_img")
-        if dpg.does_item_exist("driver_headshot_texture"):
-            dpg.delete_item("driver_headshot_texture")
-            
-        if dpg.does_item_exist("active_driver_theme"):
-            dpg.delete_item("active_driver_theme")
-        if dpg.does_item_exist("track_layout_theme"):
-            dpg.delete_item("track_layout_theme")
-            
-        for d_num in list(self.grid_locs.keys()):
-            if dpg.does_item_exist(f"theme_driver_{d_num}"):
-                dpg.delete_item(f"theme_driver_{d_num}")
-            if dpg.does_item_exist(f"grid_location_tag_{d_num}"):
-                dpg.delete_item(f"grid_location_tag_{d_num}")
-            if dpg.does_item_exist(f"annotation_tag_{d_num}"):
-                dpg.delete_item(f"annotation_tag_{d_num}")
-
-        if len(self.pixels) != (self.w * self.h * 4):
-            self.w, self.h = 1, 1
-            self.pixels = [0.15, 0.15, 0.15, 1.0]
-
-        dpg.add_dynamic_texture(self.w, self.h, self.pixels, tag="driver_headshot_texture", parent="tex_reg")
-        dpg.add_image("driver_headshot_texture", width=180, height=180, tag="ui_headshot_img", parent="headshot_container")
+        # Update the values inside the existing blank texture instead of re-adding it
+        dpg.set_value("driver_headshot_texture", self.pixels)
 
         with dpg.theme(tag="active_driver_theme"):
             with dpg.theme_component(dpg.mvScatterSeries):
@@ -486,8 +447,6 @@ class F1TelemetryApp:
         threading.Thread(target=self.fetch_race_control, daemon=True).start()
 
 
-
-
     def jump_to_lap(self, sender, app_data):
         target_lap = int(app_data.split()[-1])
         target_time = next((lap['start'] for lap in self.laps if lap['number'] == target_lap), None)
@@ -507,8 +466,6 @@ class F1TelemetryApp:
                     start_time = datetime.strptime(self.telemetry[self.start_idx]['date'][:19], "%Y-%m-%dT%H:%M:%S")
                     self.elapsed = (frame_time - start_time).total_seconds()
                     break
-
-
 
 
     def stream_telemetry(self):
@@ -532,23 +489,6 @@ class F1TelemetryApp:
             self.gear_data.append(current_frame.get('n_gear') or 0)
             self.rpm_data.append(current_frame.get('rpm') or 0)
             
-            # if 'n_gear' in current_frame:
-            #     self.gear_data.append(current_frame['n_gear'])
-            # else:
-            #     self.gear_data.append(current_frame.get('gear', 0))
-            #
-            # # Debug Trace Dump 
-            # # print(f"TS: {current_frame.get('date')} | RPM: {current_frame.get('rpm')} | G: {current_frame.get('n_gear')}")
-            # # print(f"SPD: {current_frame.get('speed')} THR: {current_frame.get('throttle')} BRK: {current_frame.get('brake')}")
-            #
-            # if len(self.t_data) > self.max_history:
-            #     self.t_data.pop(0)
-            #     self.spd_data.pop(0)
-            #     self.thr_data.pop(0)
-            #     self.brk_data.pop(0)
-            #     self.gear_data.pop(0)
-            #     self.rpm_data.pop(0)
-
             if len(self.t_data) > self.max_history:
                 for arr in [self.t_data, self.spd_data, self.thr_data, self.brk_data, self.gear_data, self.rpm_data]:
                     arr.pop(0)
@@ -567,17 +507,8 @@ class F1TelemetryApp:
             dpg.set_value("Gear_series_tag", [self.t_data, self.gear_data])
             dpg.set_value("lap_indicator_tag", f"Lap: {active_lap}")
 
-            if self.t_data:
-                min_x = self.t_data[0]
-                max_x = self.t_data[-1]
-                dpg.set_axis_limits("Speed_series_tag_xaxis", min_x, max_x)
-                dpg.set_axis_limits("Throttle_series_tag_xaxis", min_x, max_x)
-                dpg.set_axis_limits("Brake_series_tag_xaxis", min_x, max_x)
-                dpg.set_axis_limits("rpm_series_tag_xaxis", min_x, max_x)
-                dpg.set_axis_limits("Gear_series_tag_xaxis", min_x, max_x)
-
             if self.locations:
-                closest_location = min(self.locations, key=lambda item: abs(item['parsed_date'] - frame_timestamp))
+                closest_location = min(self.locations, key=lambda item: abs(datetime.strptime(item['date'][:19], "%Y-%m-%dT%H:%M:%S") - frame_timestamp))
                 target_x, target_y = closest_location['x'], closest_location['y']
                 if last_x == 0.0 and last_y == 0.0:
                     last_x, last_y = target_x, target_y
@@ -592,7 +523,7 @@ class F1TelemetryApp:
             if self.show_grid:
                 for driver_num, locs in self.grid_locs.items():
                     if locs:
-                        match = min(locs, key=lambda item: abs(item['parsed_date'] - frame_timestamp))
+                        match = min(locs, key=lambda item: abs(datetime.strptime(item['date'][:19], "%Y-%m-%dT%H:%M:%S") - frame_timestamp))
                         dpg.set_value(f"grid_location_tag_{driver_num}", [[match['x']], [match['y']]])
                         dpg.set_value(f"annotation_tag_{driver_num}", [match['x'], match['y']])
 
@@ -603,6 +534,28 @@ class F1TelemetryApp:
             remaining_sleep = step_duration - execution_time
             if remaining_sleep > 0:
                 time.sleep(remaining_sleep)
+
+
+
+
+
+
+
+
+
+
+
+    # def race_control_sync(self):
+    #      import json
+    #      temp_session = self.session_key
+    #      if not temp_session:
+    #          return
+    #      res = requests.get(f"https://api.openf1.org/v1/race_control?session_key={temp_session}")
+    #      if res.status_code == 200:
+    #          data = res.json()
+    #          if len(data) > 0:
+    #              print(f"Legacy Sync Status Checked: {data[-1].get('flag')}")
+
 
 
 
@@ -631,36 +584,133 @@ class F1TelemetryApp:
                 pass
             time.sleep(4)
 
-
-
-
     def pause_playback(self):
         self.paused = True
-
-
-
 
     def resume_playback(self):
         self.paused = False
 
+# allowed_countries = ["Sakhir", "Jeddah", "Melbourne", "Baku", "Miami", "Imola", "Monte Carlo", "Catalunya", "Montreal", "Spielberg", "Silverstone", "Hungaroring", "Spa-Francorchamps", "Zandvoort", "Monza", "Singapore", "Suzuka", "Lusail", "Austin", "Mexico City", "Interlagos", "Las Vegas", "Yas Marina Circuit"]
+# while True: 
+#      user_country = input("Enter the country of the Grand Prix, type 'help' for a list of valid countries: ")
+#      if user_country in allowed_countries:
+#          break
+#      #elif user_country == "New Zealand":
+#          #print("I wish")
+#      elif user_country.lower() == "help":
+#          print("Valid countries are:")
+#          for country in allowed_countries:
+#              print(f"- {country}")
+#      else:
+#          print("Invalid country. Please enter a valid country from the list.")
 
 
+# allowed_years = ["2020", "2021", "2022", "2023"]
+# while True: 
+#      user_year = input("Enter the year of the Grand Prix: ")
+#      if str(user_year) in allowed_years:
+#          break
+#      else:       
+#          print("Invalid year. Please enter a valid year from the list.")
+
+        
+# allowed_sessions = ["Qualifying", "Race", "Practice 1", "Practice 2", "Practice 3", "Sprint Qualifying", "Sprint Race"]
+# while True: 
+#      user_session = input("Enter the session of the Grand Prix: ")
+#      if user_session in allowed_sessions:
+#          break
+#      else:
+#          print("Invalid session. Please enter a valid session from the list.")
+# user_country = ["Sakhir", "Jeddah", "Melbourne", "Baku", "Miami", "Imola", "Monte Carlo", "Catalunya", "Montreal", "Spielberg", "Silverstone", "Hungaroring", "Spa-Francorchamps", "Zandvoort", "Monza", "Singapore", "Suzuka", "Lusail", "Austin", "Mexico City", "Interlagos", "Las Vegas", "Yas Marina Circuit"]
+# selection, index = pick(user_country, "Select the Gran Prix: ")
+# print(f"Gran Prix: {selection} (index: {index})")
+
+
+# user_year = ["2020", "2021", "2022", "2023", "2024"]
+# selection, index = pick(user_year, "Select the Gran Prix: ")
+# print(f"Gran Prix: {selection} (index: {index})")
+
+
+# user_session = ["Qualifying", "Race", "Practice 1", "Practice 2", "Practice 3", "Sprint Qualifying", "Sprint Race"]
+# selection, index = pick(user_session, "Select the Gran Prix: ")
+# print(f"Gran Prix: {selection} (index: {index})")
+
+# print (f"Session Selected:{user_country}, {user_session}, {user_year}")
+# print (f"Grabbing Key...")
+
+
+
+
+
+# for i in range(starting_index, time_legnth):
+#      seperate_value = data_point[i]
+#      current_time_raw = seperate_value['date']
+#      try:
+#          clean_time = datetime.fromisoformat(current_time_raw).strftime("%H:%M:%S.%f")[:-3]
+#      except Exception:
+#          clean_time = current_time_raw
+
+#      seperate_value = data_point[i]
+#      current_speed = seperate_value['speed']
+#      current_gear = seperate_value['n_gear']
+#      current_throttle = seperate_value['throttle']
+#      current_brake = seperate_value['brake']
+#      current_rpm = seperate_value['rpm']
+#       seperate_value = data_point[i]
+#       current_time_raw = seperate_value['date']
+#       try:
+#           clean_time = datetime.fromisoformat(current_time_raw).strftime("%H:%M:%S.%f")[:-3]
+#       except Exception:
+#           clean_time = current_time_raw
+
+#       seperate_value = data_point[i]
+#       current_speed = seperate_value['speed']
+#       current_gear = seperate_value['n_gear']
+#       current_throttle = seperate_value['throttle']
+#       current_brake = seperate_value['brake']
+#       current_rpm = seperate_value['rpm']
+
+#      speed_history_list.append(current_speed)
+#      print(f"Time: {clean_time}| Speed: {current_speed}kph Gear: {current_gear} Throttle: {current_throttle}% Brake: {current_brake}% Rpm: {current_rpm}")
+#       speed_history_list.append(current_speed)
+#       print(f"Time: {clean_time}| Speed: {current_speed}kph Gear: {current_gear} Throttle: {current_throttle}% Brake: {current_brake}% Rpm: {current_rpm}")
+
+#       if len(speed_history_list) > 0:
+#           speed_history_list.pop(0)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
 
     def increase_speed(self):
         if self.speed_idx < len(self.SPEEDS) - 1:
             self.speed_idx += 1
             dpg.set_value("speed_indicator_tag", f"Speed: {(self.SPEEDS[self.speed_idx] / 0.2):.2f}x")
 
-
-
-
     def decrease_speed(self):
         if self.speed_idx > 0:
             self.speed_idx -= 1
             dpg.set_value("speed_indicator_tag", f"Speed: {(self.SPEEDS[self.speed_idx] / 0.2):.2f}x")
-
-
-
 
     def toggle_grid(self):
         self.show_grid = not self.show_grid
@@ -671,9 +721,6 @@ class F1TelemetryApp:
             dpg.set_value("grid_location_tag", [[], []])
             for driver_num in self.grid_locs.keys():
                 dpg.set_value(f"grid_location_tag_{driver_num}", [[], []])
-
-
-
 
 if __name__ == "__main__":
     app = F1TelemetryApp()
