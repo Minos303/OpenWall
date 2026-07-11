@@ -11,9 +11,10 @@ A UI based app that allows the user to visualize, download and interact with tel
 **Download:** https://github.com/Minos303/OpenWall/releases
 
 **Quick Start:**
-1. Download the zip for your operating system, unzip and extract the launcher, double click to run.
-2. Select your race data, if you want a tested and working race select 2026, Shanghai, Kimi Antonelli, click load telemetry data, this may take a bit.
-3. Once the race screen opens up give it a couple of seconds for the race to load, enjoy :)
+1. Download the zip for your operating system, double click into the file, DO NOT extract the launcher, double click to run.
+2. (If you get a windows warning error click more info and run anyway, its not dangerous I promise
+3. Select your race data, if you want a tested and working race select 2026, Shanghai, Kimi Antonelli, click load telemetry data, this may take a bit.
+4. Once the race screen opens up give it a couple of seconds for the race to load, enjoy :)
 
 **Features**:
 - Fast forward & slow down. (<<>>)
