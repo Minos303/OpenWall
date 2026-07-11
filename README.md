@@ -34,7 +34,7 @@ and dream to become a formula 1 engineer. So to you reading this I hope it inspi
 this project uses open f1 for the data, dearpygui for the ui and datetime for the time formatting.
 
 **Credits:**
-Thanks to Connor, my coding teacher, Programming with Mosh for the beginners tutorial, W3Schools for a range of tutorials.
+Thanks to Connor, my coding teacher, Programming with Mosh for the beginners tutorial, W3Schools for a range of tutorials. Thanks to Stardance for making this possible.
 The following libraries were used in this project: io, time, threading, requests, datetime, dearpygui and PIL. Pick was used in earlier stages of development
 
 **Disclaimer:** 
